@@ -1,8 +1,16 @@
+from rest_framework import mixins
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Curso, Avaliacao
 from .serializers import CursoSerializer, AvalicaoSerializer
+
+"""
+API VERSAO 1
+"""
 
 
 class CursosAPIView(generics.ListCreateAPIView):
@@ -36,3 +44,35 @@ class AvaliacaoAPIView(generics.RetrieveUpdateDestroyAPIView):
                                      pk=self.kwargs.get('avaliacao_pk'))
 
         return get_object_or_404(self.get_queryset(), pk=self.kwargs.get('avaliacao_pk'))
+
+
+"""
+API VERSAO 2
+"""
+
+
+class CursoViewSet(viewsets.ModelViewSet):
+    queryset = Curso.objects.all()
+    serializer_class = CursoSerializer
+
+    @action(detail=True, methods=['get'])
+    def avaliacoes(self, request, pk=None):
+        curso = self.get_object()
+        serializer = AvalicaoSerializer(curso.avaliacoes.all(), many=True)
+        return Response(serializer.data)
+
+
+# class AvaliacaoViewSet(viewsets.ModelViewSet):
+#     queryset = Avaliacao.objects.all()
+#     serializer_class = AvalicaoSerializer
+
+class AvaliacaoViewSet(
+    #mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet):
+
+    queryset = Avaliacao.objects.all()
+    serializer_class = AvalicaoSerializer
